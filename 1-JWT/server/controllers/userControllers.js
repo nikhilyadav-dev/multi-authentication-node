@@ -2,11 +2,9 @@ import User from "../models/userModel.js";
 import ErrorHandler from "../middleware/error.js";
 import { wrapAsync } from "../middleware/wrapAsync.js";
 import { sendEmail } from "../utils/sendEmail.js";
+import { sendToken } from "../utils/sendToken.js";
 
 import twilio from "twilio";
-
-const client = twilio(process.env.TWILIO_SID, process.env.TWILIO_AUTH_TOKEN);
-console.log(process.env.TWILIO_SID, process.env.TWILIO_AUTH_TOKEN);
 
 export const register = wrapAsync(async (req, res, next) => {
   try {
@@ -148,5 +146,72 @@ export const register = wrapAsync(async (req, res, next) => {
       </footer>
     </div>
   `;
+  }
+});
+
+export const verifyOTP = wrapAsync(async function (req, res, next) {
+  const { email, phone, otp } = req.body;
+
+  function validPhoneNumber(phone) {
+    const phoneRegex = /^(\+91|91)?\d{10}$/;
+    return phoneRegex.test(phone);
+  }
+
+  if (!validPhoneNumber(phone)) {
+    return next(new ErrorHandler("Invalid phone number", 400));
+  }
+
+  try {
+    const userAllEntries = await User.find({
+      $or: [
+        { email, accountVerified: false },
+        { phone, accountVerified: false },
+      ],
+    }).sort({ createdAt: -1 });
+
+    if (!userAllEntries) {
+      return next(new ErrorHandler("User not found", 404));
+    }
+
+    let user;
+    if (userAllEntries.length > 1) {
+      user = userAllEntries[0];
+
+      await User.deleteMany({
+        _id: { $ne: user._id },
+        $or: [
+          { phone, accountVerified: false },
+          { email, accountVerified: false },
+        ],
+      });
+    } else {
+      user = userAllEntries[0];
+    }
+
+    console.log(user);
+    console.log(otp);
+    if (user.verificationCode != Number(otp)) {
+      console.log("OTP verification working");
+      return next(new ErrorHandler("Invalid OTP", 400));
+    }
+
+    const currentTime = Date.now();
+
+    const verificationCodeExpire = new Date(
+      user.verificationCodeExpire
+    ).getTime();
+    if (currentTime > verificationCodeExpire) {
+      return next(new ErrorHandler("OTP Expired.", 400));
+    }
+
+    user.accountVerified = true;
+    user.verificationCode = null;
+    user.verificationCodeExpire = null;
+    await user.save({ validateModifiedOnly: true });
+
+    console.log("Send token request sended");
+    sendToken(user, 200, "Account Verified.", res);
+  } catch (error) {
+    return next(new ErrorHandler("Internal server error", 500));
   }
 });
