@@ -27,13 +27,31 @@ const userSchema = new mongoose.Schema({
 
 userSchema.pre("save", async function (next) {
   if (!this.isModified("password")) {
-    next();
+    return;
   }
   this.password = await bcrypt.hash(this.password, 10);
+  return;
 });
 
 userSchema.methods.comparePassword = async function (enteredPassword) {
   return await bcrypt.compare(enteredPassword, this.password);
 };
 
-export default User = mongoose.model("User", userSchema);
+userSchema.methods.generateVerificationCode = function () {
+  function generateFiveDigitNumber() {
+    const firstDigit = Math.floor(Math.random() * 9) + 1;
+    const remainingDigits = Math.floor(Math.random() * 10000)
+      .toString()
+      .padStart(4, 0);
+
+    return parseInt(firstDigit + remainingDigits);
+  }
+  const verificationCode = generateFiveDigitNumber();
+  this.verificationCode = verificationCode;
+  this.verificationCodeExpire = Date.now() + 10 * 60 * 1000;
+
+  return verificationCode;
+};
+
+const User = mongoose.model("User", userSchema);
+export default User;

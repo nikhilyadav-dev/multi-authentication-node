@@ -1,3 +1,5 @@
+import { config } from "dotenv";
+config({ path: "./.env" });
 import { app } from "./app.js";
 
 app.listen(process.env.PORT, () => {
