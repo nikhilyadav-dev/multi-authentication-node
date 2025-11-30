@@ -215,3 +215,25 @@ export const verifyOTP = wrapAsync(async function (req, res, next) {
     return next(new ErrorHandler("Internal server error", 500));
   }
 });
+
+export const login = wrapAsync(async function (req, res, next) {
+  const { email, password } = req.body;
+  if (!email || !password) {
+    return next(new ErrorHandler("Email and Password are required", 400));
+  }
+
+  const user = await User.findOne({ email, accountVerified: true }).select(
+    "+password"
+  );
+
+  if (!user) {
+    return next(new ErrorHandler("Invalid Email and Password", 400));
+  }
+
+  const isPasswordMatched = await user.comparePassword(password);
+
+  if (!isPasswordMatched) {
+    return next(new ErrorHandler("Invalid Email and Password", 400));
+  }
+  sendToken(user, 200, "User logged in successfully.", res);
+});
