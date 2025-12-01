@@ -11,17 +11,17 @@ export const errorMiddleware = async (err, req, res, next) => {
 
   if (err.name === "CastError") {
     const message = `Invalid ${err.path}`;
-    err = ErrorHandler(message, 400);
+    err = new ErrorHandler(message, 400);
   }
 
   if (err.name === "JsonWebTokenError") {
     const message = `JSON Web Token is invalid , Try again`;
-    err = ErrorHandler(message, 400);
+    err = new ErrorHandler(message, 400);
   }
 
   if (err.name === "TokenExpiredError") {
     const message = `JSON Web Token is expired , Try again`;
-    err = ErrorHandler(message, 400);
+    err = new ErrorHandler(message, 400);
   }
 
   if (err.code === 11000) {

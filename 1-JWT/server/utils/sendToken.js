@@ -1,7 +1,6 @@
 export async function sendToken(user, satusCode, message, res) {
-  console.log("send token working");
   const token = await user.generateToken();
-  console.log(token);
+
   res
     .status(satusCode)
     .cookie("token", token, {
