@@ -3,6 +3,7 @@ import ErrorHandler from "../middleware/error.js";
 import { wrapAsync } from "../middleware/wrapAsync.js";
 import { sendEmail } from "../utils/sendEmail.js";
 import { sendToken } from "../utils/sendToken.js";
+import crypto from "crypto";
 
 import twilio from "twilio";
 
@@ -268,7 +269,6 @@ export const forgotPassword = wrapAsync(async function (req, res, next) {
   }
 
   const resetToken = await user.generateResetPasswordToken();
-  console.log(resetToken);
   await user.save({ validateBeforeSave: false });
   const resetPasswordUrl = `${process.env.FRONTEND_URL}/password/reset/${resetToken}`;
   const message = `Your Reset Password Token is:- \n\n ${resetPasswordUrl} \n\n If you have not requested this email then please ignore it.`;
@@ -294,4 +294,38 @@ export const forgotPassword = wrapAsync(async function (req, res, next) {
       )
     );
   }
+});
+
+export const resetPassword = wrapAsync(async function (req, res, next) {
+  const { resetToken } = req.params;
+  const { password, confirmPassword } = req.body;
+  console.log(resetToken, password, confirmPassword);
+  const resetPasswordToken = crypto
+    .createHash("sha256")
+    .update(resetToken)
+    .digest("hex");
+
+  const user = await User.findOne({
+    resetPasswordToken,
+    resetPasswordExpire: { $gt: Date.now() },
+  });
+
+  if (!user) {
+    return next(
+      new ErrorHandler("Reset password token is invalid or has been expired")
+    );
+  }
+
+  if (password !== confirmPassword) {
+    return next(
+      new ErrorHandler("Password and Confirm Password do't match", 400)
+    );
+  }
+
+  user.password = password;
+  user.resetPasswordToken = undefined;
+  user.resetPasswordExpire = undefined;
+  await user.save();
+
+  sendToken(user, 200, "Reset password successfully", res);
 });
