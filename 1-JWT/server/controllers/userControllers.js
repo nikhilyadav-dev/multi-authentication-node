@@ -250,3 +250,48 @@ export const logout = wrapAsync(async function (req, res, next) {
       message: "Logged out successfully.",
     });
 });
+
+export const getUser = wrapAsync(async function (req, res, next) {
+  const user = req.user;
+  res.status(200).json({
+    success: true,
+    user,
+  });
+});
+
+export const forgotPassword = wrapAsync(async function (req, res, next) {
+  const { email } = req.body;
+  const user = await User.findOne({ email, accountVerified: true });
+
+  if (!user) {
+    return next(new ErrorHandler("User not found", 404));
+  }
+
+  const resetToken = await user.generateResetPasswordToken();
+  console.log(resetToken);
+  await user.save({ validateBeforeSave: false });
+  const resetPasswordUrl = `${process.env.FRONTEND_URL}/password/reset/${resetToken}`;
+  const message = `Your Reset Password Token is:- \n\n ${resetPasswordUrl} \n\n If you have not requested this email then please ignore it.`;
+
+  try {
+    sendEmail({
+      email: user.email,
+      subject: "Reset Password",
+      message,
+    });
+    res.status(200).json({
+      success: true,
+      message: `Email sent to ${user.email} successfully`,
+    });
+  } catch (error) {
+    user.resestPasswordToken = undefined;
+    user.resetPasswordExpire = undefined;
+    await User.save({ validateBeforeSave: false });
+    return next(
+      new ErrorHandler(
+        error.message ? error.message : "Can't send reset password",
+        500
+      )
+    );
+  }
+});
