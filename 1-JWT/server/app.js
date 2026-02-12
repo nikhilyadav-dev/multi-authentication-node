@@ -11,10 +11,10 @@ export const app = express();
 
 app.use(
   cors({
-    origin: [process.env.FRONTEND_URL],
+    origin: "http://localhost:5173",
     method: ["GET", "POST", "DELETE", "PUT"],
-    Credential: true,
-  })
+    credentials: true,
+  }),
 );
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));

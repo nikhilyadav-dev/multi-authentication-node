@@ -10,7 +10,7 @@ function OtpVerification() {
   const { isAuthenticated, setIsAuthenticated, setUser } = useContext(Context);
   const { email, phone } = useParams();
   const [otp, setOtp] = useState(["", "", "", "", ""]);
-
+6
   function handleChange(value, index) {
     if (!/^\d*$/.test(value)) return;
     const newOtp = [...otp];

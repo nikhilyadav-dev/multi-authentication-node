@@ -19,7 +19,7 @@ const userSchema = new mongoose.Schema({
   },
   verificationCode: Number,
   verificationCodeExpire: Date,
-  resestPasswordToken: String,
+  resetPasswordToken: String,
   resetPasswordExpire: Date,
   createdAt: {
     type: Date,
@@ -64,7 +64,7 @@ userSchema.methods.generateToken = async function () {
 userSchema.methods.generateResetPasswordToken = async function () {
   const resetToken = crypto.randomBytes(20).toString("hex");
 
-  this.resestPasswordToken = crypto
+  this.resetPasswordToken = crypto
     .createHash("sha256")
     .update(resetToken)
     .digest("hex");

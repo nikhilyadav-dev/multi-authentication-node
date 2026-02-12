@@ -106,7 +106,6 @@ export const register = wrapAsync(async (req, res, next) => {
           .toString()
           .split("")
           .join(" ");
-        console.log(verificationCodeWithSpace);
         await client.calls.create({
           twiml: `<Response><Say>Your verification code is ${verificationCodeWithSpace}. Your verification code is ${verificationCodeWithSpace}.</Say></Response>`,
           from: process.env.TWILIO_PHONE_NUMBER,
@@ -286,7 +285,7 @@ export const forgotPassword = wrapAsync(async function (req, res, next) {
   } catch (error) {
     user.resestPasswordToken = undefined;
     user.resetPasswordExpire = undefined;
-    await User.save({ validateBeforeSave: false });
+    await user.save({ validateBeforeSave: false });
     return next(
       new ErrorHandler(
         error.message ? error.message : "Can't send reset password",
@@ -297,18 +296,23 @@ export const forgotPassword = wrapAsync(async function (req, res, next) {
 });
 
 export const resetPassword = wrapAsync(async function (req, res, next) {
+  console.log("Request Working");
   const { resetToken } = req.params;
   const { password, confirmPassword } = req.body;
-  console.log(resetToken, password, confirmPassword);
+
   const resetPasswordToken = crypto
     .createHash("sha256")
     .update(resetToken)
     .digest("hex");
 
+  console.log("resetPasswordToken", resetPasswordToken);
+
   const user = await User.findOne({
     resetPasswordToken,
-    resetPasswordExpire: { $gt: Date.now() },
+    resetPasswordExpire: { $gt: new Date(Date.now()) },
   });
+
+  console.log(user);
 
   if (!user) {
     return next(

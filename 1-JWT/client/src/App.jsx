@@ -22,7 +22,10 @@ function App() {
             element={<OtpVerification />}
           />
           <Route path="/password/forgot" element={<ForgotPassword />} />
-          <Route path="/password/reset/:token" element={<ResetPassword />} />
+          <Route
+            path="/password/reset/:resetToken"
+            element={<ResetPassword />}
+          />
         </Routes>
         <ToastContainer theme="colored" />
       </Router>
