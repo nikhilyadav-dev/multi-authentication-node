@@ -217,6 +217,20 @@ A production-ready authentication system built using the MERN Stack, featuring s
 ```
 ---
 
+## 🏗️ Architecture Summary
+
+🎨 **Frontend (React + Vite)** → Handles UI, forms, API requests
+
+⚙️ **Backend (Express.js)** → Handles authentication & business logic
+
+🗄️ **MongoDB** → Stores user data securely
+
+🔐 **JWT** → Token-based authentication
+
+📲 **Twilio + NodeMailer** → OTP verification system
+
+---
+
 ## 📦 Installation Guide
 
 ### 1️⃣ Clone the Repository
